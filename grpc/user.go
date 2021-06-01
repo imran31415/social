@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"log"
@@ -11,7 +12,11 @@ import (
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserReq) (*pb.User, error) {
 	if user, err := s.r.GetUserByUserName(req.GetUserName()); err == nil {
-		return serializers.User(user), nil
+		if user.Password == req.GetPassword() {
+			return serializers.User(user), nil
+		} else {
+			return nil, fmt.Errorf("invalid user")
+		}
 	}
 	insertedId, err := s.r.InsertUser(serializers.CreateUserReq(req))
 	if err != nil {

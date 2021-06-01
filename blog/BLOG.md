@@ -1202,8 +1202,133 @@ export default {
 </script>
 ```
 
-5. creating a docker file for the `http` package
+Note this vue app is assuming a GRPC client is available at localhost:8083
 
+Next, we need to slightly modify the CreateUserApi to support login by updating the CreateUser rpc to perform a get and match password before returning:
+
+```go
+
+func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserReq) (*pb.User, error) {
+	if user, err := s.r.GetUserByUserName(req.GetUserName()); err == nil {
+		if user.Password == req.GetPassword() {
+			return serializers.User(user), nil
+		} else {
+			return nil, fmt.Errorf("invalid user")
+		}
+	}
+	
+}
+
+```
+
+
+## Part 5: building / deploying with docker-compose
+
+At this point we have all the pieces to build and deploy the social grpc api and http server serving the vuejs files. 
+If deployed correctly a user should be able to login via the CreateUserAPI frontend/backend integration
+
+To enable the GRPC connection from our VUEjs app and GRPC api we need to use an envoy proxy between the 2 http server and go routine runinng the GRPC api.
+ 
+We can plugin an envoy proxy to do this.  In a production system, this proxy would usually be at a layer upstream from the machine receiving the proxy requests.  However, for local development we can simmulate this with an envoy docker deployment.
+
+See the `envoy/` package which consists of the envoy config YAML and Dockerfile.  These settings are default for grpc/http proxy for envoy.  
+
+The one thing to note is the listener port address of 8083:
+```
+listeners:
+- name: listener_0
+address:
+socket_address: { address: 0.0.0.0, port_value: 8083 }
+
+```
+
+This is the address the HTTP server will attempt to connect to reach the GRPC server. 
+
+The echo service points to the port that is running the actual GRPC server. 
+
+When a user performs an action on our app that triggers a grpc call the http server will call port 8083 which will proxy the GRPC server at 50053. 
+```
+ hosts: [{ socket_address: { address: host.docker.internal, port_value: 50053 }}]
+```
+
+To deploy we need 3 things: MYSQL database container, GO Binary, envoy proxy.
+
+The go binary will run 2 programs at port 50053 and 8080, the grpc and http server respectively. 
+
+To facilitate this,  we can create a main.go single binary to deploy at `http/server/main.go with the following:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"social/app/grpc"
+	"social/repo"
+	"time"
+)
+
+const (
+	tenmplatesDir = "./frontend/src/static"
+)
+
+func main() {
+	// Serve static files from the frontend/dist directory.
+	var err error
+	go func() {
+		// TODO: replace with env
+		host := os.Getenv("DB_HOST")
+		dbname := os.Getenv("DB_NAME")
+		pw := os.Getenv("DB_PASS")
+		port := os.Getenv("DB_PORT")
+		user := os.Getenv("DB_USER")
+		r, rErr := repo.NewRepo(&repo.Config{
+			DbPass: pw,
+			DbUser: user,
+			DbName: dbname,
+			DbHost: host,
+			DbPort: port,
+		})
+		if rErr != nil {
+			log.Fatal(rErr)
+			return
+		}
+		err = grpc.Run(":50053", grpc.NewServer(r))
+	}()
+	time.Sleep(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	fs := http.FileServer(http.Dir("./dist"))
+	http.Handle("/", fs)
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(tenmplatesDir))))
+
+	// Start the server.
+	fmt.Println("Server listening on port 3000")
+	log.Panic(
+		http.ListenAndServe(":3000", nil),
+	)
+}
+
+```
+
+This also gives us the opportunity to swap out hardcoded DB params to environment variables we can manage outside the application. 
+
+Note we are also serving /static/ directory to be used by the vue app
+
+This line serves the compiled vue app /dist directory:
+```go
+fs := http.FileServer(http.Dir("./dist"))
+http.Handle("/", fs)
+```
+
+We can also see that the GRPC server is run in the go routine. This is something that can be refactored to be run as a separate deployment.
+
+
+To build the binary we can do the following dockerfile:
 ```dockerfile
 # Build and bundle the Vue.js frontend SPA
 #
@@ -1253,13 +1378,14 @@ EXPOSE 8080
 CMD ["/app/main.go"]
 ```
 
-This Dockerfile builds go and vue code into one http server binary
-If you want more info on the details behind this dockerfile please google ""
+This Dockerfile builds go and vue code into one http server binary.
+
+One thing to note is we have to build the directory tree in the docker file to match whatever is expected in the go.mod file replace statements,
 
 6.Next we create a docker-compose.yaml file that can run 3 dockefiles:  
  - mysql/Dockerfile
  - http/Dockerfile 
- - envoy/Dockerfile:  proxy to enable http2 requests to our GRPC server from the vue app
+ - envoy/Dockerfile
 
 Running all this with 
 
@@ -1267,7 +1393,7 @@ Running all this with
 docker-compose up --build
 ```
 
-Should run the server, mysql databse, and envoy container:
+Should run go server binary, mysql, and envoy container:
 
 You should see the login screen at localhost:3000
 
@@ -1276,14 +1402,10 @@ You should see the login screen at localhost:3000
 And after logging in you should see:
 ![image](https://user-images.githubusercontent.com/2126188/120285582-3e2b0880-c272-11eb-998c-d792a530f2f1.png)
 
-And after logging in you should see:
-
-
-After entering a username and password, it should the logged in msg
-
-You should also be able to see the successful log form the grpc server:
+Backend logs:
 
 `backend    | 2021/06/01 07:26:37 Successfully created user
 `
+
 
 
