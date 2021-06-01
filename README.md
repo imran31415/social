@@ -1,3 +1,7 @@
+
+## Documentation:
+See [blog/BLOG.md](blog/BLOG.md) for dev process
+
 ## Social Network
 
 Build Protos
@@ -9,6 +13,3 @@ protoc --doc_out=protos  protos/social.proto
 
 Run with docker compose:
 `docker-compose up --build`
-
-## Documentation:
-See [blog/BLOG.md](blog/BLOG.md) for dev process
