@@ -20,6 +20,7 @@ Create a social network application where users can have an account, make posts,
 3. Create javascript client to demonstrate integration
 
 
+
 ## Part 1: Create database schema:
 
 We need the following initial schema to support our app:
