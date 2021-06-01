@@ -3,6 +3,7 @@ package repo
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 )
 
 type User struct {
@@ -10,6 +11,10 @@ type User struct {
 	Password string           `db:"password"`
 	Username string           `db:"username"`
 	Profile  *json.RawMessage `db:"profile"`
+}
+
+type Users struct {
+	Items []*User
 }
 
 func (r *Repo) GetUserByUserName(username string) (*User, error) {
@@ -28,6 +33,23 @@ func (r *Repo) GetUserById(id int64) (*User, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func (r *Repo) GetUsersOtherThanId(id int64) (*Users, error) {
+	users := []*User{}
+	query, args, err := sqlx.In(fmt.Sprintf("SELECT * FROM social_user WHERE id NOT = ?"), id)
+	if err != nil {
+		return nil, err
+	}
+	query = r.Db.Rebind(query)
+	err = r.Db.Select(&users, query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+	return &Users{
+		Items: users,
+	}, nil
 }
 
 func (r *Repo) InsertUser(p *User) (int64, error) {

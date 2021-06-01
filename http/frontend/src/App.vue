@@ -41,16 +41,14 @@
           </form>
         </div>
       </div>
-      <div class="row" v-if="posts">
-        <div class="col-md-6 offset-md-3 py-5">
+      <div class="row" >
+        <div class="col-md-6 offset-md-3 py-5" v-if="posts" >
           <h2>{{this.username}}'s Posts: </h2>
           <div class="row" v-for="post in posts" :key="post.id">
             {{post.id}}: {{post.content}}
           </div>
         </div>
-      </div>
-      <div class="row" v-else>
-        <div class="col-md-6 offset-md-3 py-5">
+        <div class="col-md-6 offset-md-3 py-5" v-else>
           <h2> {{this.username}} has no posts in the social network </h2>
         </div>
       </div>

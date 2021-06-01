@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"log"
 	pb "social/app/grpc/protos"
 	"social/app/grpc/protos/serializers"
 	"social/repo"
@@ -20,6 +21,9 @@ func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*pb.Pos
 	if posts.Items == nil || len(posts.Items) != 1 {
 		return nil, fmt.Errorf("err unexp items")
 	}
+	created := posts.Items[0]
+	// TODO: move this out of user call path
+	go s.populateFeed(created.Id, created.UserId)
 	return serializers.Post(posts.Items[0]), nil
 }
 
@@ -40,5 +44,26 @@ func (s *Server) GetPosts(ctx context.Context, req *pb.GetPostsReq) (*pb.Posts, 
 	default:
 		return nil, fmt.Errorf("invalid req")
 	}
+}
+
+func (s *Server) populateFeed(postId, postOwnerId int64) error {
+	users, err := s.r.GetUsersOtherThanId(postOwnerId)
+	if err != nil {
+		return err
+	}
+	for _, user := range users.Items {
+		toCreate := &pb.CreateFeedItemReq{
+			OwnerId: user.Id,
+			PostId:  postId,
+		}
+		if _, err = s.CreateFeedItem(context.TODO(), toCreate); err != nil {
+			log.Println("err inserting feed item: ", err)
+
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 
 }

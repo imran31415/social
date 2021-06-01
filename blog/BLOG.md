@@ -9,6 +9,8 @@ Create a social network application where users can have an account, make posts,
 - Mysql
 - GRPC/ Protocol Buffers
 - Vue
+- Envoy
+- Docker
 
 ## Plan
 
@@ -1634,4 +1636,70 @@ Once logged in and after entering a post, the page should show the post dynamica
 
 ## Part 7: Adding User Feed. 
 
+We will use a "fan-out" approach to creating the user feed.  What this means is that any time an item is posted, we will "fan-out" the item to every other user. 
 
+For example, we have users A, B and C
+
+A makes a post:
+    - create Post item in DB POST ID 100 (owned by USER A)
+user A post gets Fanned out to B and C
+    - Create a FeedItem in (OWNED by user B, points to POST 100)
+    - Create a FeedItem in (OWNED by user C, points to POST 100)
+
+When loading user B (and C's feed), we can query for all FeedItems owned by the respective user.  
+Next we can query the posts by the feed.post_id to get the post content and return in the user's feed. 
+
+To support this anytime a user makes a post through the GRPC create post endpoint, we need to trigger a process to populate all other user's feed table rows with the post and user ID.
+
+The implementation for this is a function to populate the feed based on a postId and the post's owner ID:
+
+```go
+func (s *Server) populateFeed(postId, postOwnerId int64) error {
+	users, err := s.r.GetUsersOtherThanId(postOwnerId)
+	if err != nil {
+		return err
+	}
+	for _, user := range users.Items {
+		toCreate := &pb.CreateFeedItemReq{
+			OwnerId: user.Id,
+			PostId:  postId,
+		}
+		if _, err = s.CreateFeedItem(context.TODO(), toCreate); err != nil {
+			log.Println("err inserting feed item: ", err)
+
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+```
+
+For now we can call this in-line as a go routine in CreatePost This will ensure the feed will get populated but not block the user path:
+
+```go
+func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*pb.Post, error) {
+	insertedId, err := s.r.InsertPost(serializers.CreatePostReq(req))
+	if err != nil {
+		return nil, err
+	}
+	posts, err := s.r.GetPostsIds([]int64{insertedId}, repo.FieldNameSocialPostId)
+	if err != nil {
+		return nil, err
+	}
+	if posts.Items == nil || len(posts.Items) != 1 {
+		return nil, fmt.Errorf("err unexp items")
+	}
+	created := posts.Items[0]
+	go s.populateFeed(created.Id, created.UserId)
+	return serializers.Post(posts.Items[0]), nil
+}
+```
+
+We can refactor this out later by instead of triggering the go routine, we can push the msg to signal feed population to pubsub or kafka and then have one centralized process writing to the DB. 
+This way throttling will be easier if we get too many go routines trying to write to the DB at the same time.  Another way to handle this without pubsub is using a go routine pool to perform the DB updates so we can limit the concurrent writes to the DB based on the number of workers in the pool.
+
+With the GRPC api updated to populate the feed after a post is created, we can update the front end to render the posts for a given user.
