@@ -24,7 +24,7 @@ type Posts struct {
 
 func (r *Repo) GetPostsIds(ids []int64, fieldName SocialPostFieldName) (*Posts, error) {
 	posts := []*Post{}
-	query, args, err := sqlx.In(fmt.Sprintf("SELECT * FROM social_post WHERE %s IN (?)", fieldName), ids)
+	query, args, err := sqlx.In(fmt.Sprintf("SELECT * FROM social_post WHERE %s IN (?) ORDER BY ID DESC", fieldName), ids)
 	if err != nil {
 		return nil, err
 	}

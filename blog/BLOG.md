@@ -1253,7 +1253,7 @@ When a user performs an action on our app that triggers a grpc call the http ser
 
 To deploy we need 3 things: MYSQL database container, GO Binary, envoy proxy.
 
-The go binary will run 2 programs at port 50053 and 8080, the grpc and http server respectively. 
+The go binary will run 2 programs at port 50053 and 3000, the grpc and http server respectively. 
 
 To facilitate this,  we can create a main.go single binary to deploy at `http/server/main.go with the following:
 
@@ -1383,11 +1383,69 @@ This Dockerfile builds go and vue code into one http server binary.
 One thing to note is we have to build the directory tree in the docker file to match whatever is expected in the go.mod file replace statements,
 
 6.Next we create a docker-compose.yaml file that can run 3 dockefiles:  
- - mysql/Dockerfile
- - http/Dockerfile 
- - envoy/Dockerfile
+ - mysql/Dockerfile [localhost, port:3306]
+ - http/Dockerfile  [localhost, ports:3000, 50053]
+ - envoy/Dockerfile[localhost, port:8083]
 
-Running all this with 
+```yaml
+version: "3"
+services:
+  # This is the MYSQL server,  this will/should only be using for development.
+  # In production we will set an Env variable indicating it is prod and we will
+  db:
+    restart: always
+    build:
+      context: ./mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: tauhisgasgknga
+    container_name: db
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    tty: true
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin -u root -ptauhisgasgknga ping']
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    security_opt:
+      - seccomp:unconfined
+  backend:
+    links:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: "http/Dockerfile"
+    container_name: backend
+    ports:
+      - "50053:50053" # GRPC server // clients can connect to this via GRPC (expirimental)
+      - "3000:3000" # HTTP server // clients can connect to this via HTTP
+    tty: true
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=db"
+      - "DB_NAME=test"
+      - "DB_PASS=tauhisgasgknga"
+      - "DB_USER=root"
+      - "MIGRATIONS_PATH=./db/schema"
+  envoy:
+    links:
+      - backend
+    build:
+      context: ./envoy
+    container_name: envoy
+    ports:
+      - "8083:8083"
+    tty: true
+
+volumes:
+  dbdata:
+```
+
 
 ```bash
 docker-compose up --build
@@ -1407,5 +1465,163 @@ Backend logs:
 `backend    | 2021/06/01 07:26:37 Successfully created user
 `
 
+## Part 6: Adding Create/Get Post user functionality
 
+We want the user to be able to see posts they have created as well as create new posts. 
+
+We can do this by adding code to our Vue app to call the GRPC posts api methods.
+
+```vue
+<template>
+
+  <div id="app" class="container" >
+    <div class="row">
+      <div class="col-md-6 offset-md-3 py-5">
+        <h1>Welcome to the social network</h1>
+      </div>
+    </div>
+    <div class="row" v-if="loggedIn">
+      <div class="col-md-6 offset-md-3 py-5">
+        <h2>You are logged in, welcome {{this.username}}</h2>
+      </div>
+    </div>
+    <div class="row" v-else>
+      <div class="col-md-6 offset-md-3 py-5">
+        <h1>Login to Social Network</h1>
+        <p>If you dont have a login, enter a username and password and one will be created</p>
+        <form v-on:submit.prevent="login">
+          <div class="form-group">
+            <input v-model="username" type="text" id="username-input" placeholder="Enter a username" class="form-control">
+            <input v-model="password" type="password" id="password-input" placeholder="Enter a password" class="form-control">
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary">Login!</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div v-if="loggedIn">
+      <div class="row">
+        <div class="col-md-6 offset-md-3 py-5">
+          <h3>{{this.username}} Create a Post: </h3>
+          <p>Enter some text to create a post</p>
+          <form v-on:submit.prevent="createPost">
+            <div class="form-group">
+              <input v-model="newPost" type="text" id="newPost-input" placeholder="Your Post" class="form-control">
+            </div>
+            <div class="form-group">
+              <button class="btn btn-primary">Post!</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="row" v-if="posts">
+        <div class="col-md-6 offset-md-3 py-5">
+          <h2>{{this.username}}'s Posts: </h2>
+          <div class="row" v-for="post in posts" :key="post.id">
+            {{post.id}}: {{post.content}}
+          </div>
+        </div>
+      </div>
+      <div class="row" v-else>
+        <div class="col-md-6 offset-md-3 py-5">
+          <h2> {{this.username}} has no posts in the social network </h2>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script>
+import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import {SocialPromiseClient} from './static/js/social_grpc_web_pb'
+import {CreateUserReq, GetPostsReq, GETPOSTSIDTYPE_USER, CreatePostReq} from './static/js/social_pb'
+
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+export default {
+  name: 'App',
+
+  created: function() {
+    this.grpcClient = new SocialPromiseClient("http://localhost:8083", null, null)
+  },
+
+  data() { return {
+    username: '',
+    password: '',
+    newPost: '',
+    userId: 0,
+    loggedIn: false,
+    posts : [],
+  } },
+
+  methods: {
+     async login() {
+       try {
+         const user = new CreateUserReq()
+         user.setUserName(this.username)
+         user.setPassword(this.password)
+         const res = await this.grpcClient.createUser(user, {})
+         console.log("Login Successful")
+         this.loggedIn = true
+         this.userId = res.toObject().id
+         await this.getUserPosts()
+         this.$forceUpdate();
+
+       } catch (err) {
+         console.error(err.message)
+         console.log("err in grpc response: ", err.message)
+         this.username = ""
+         this.password = ""
+         this.userId = 0
+         throw err
+       }
+     },
+    async createPost() {
+      if (this.userId !== 0 && this.loggedIn && this.newPost !== '') {
+        try {
+          const post = new CreatePostReq()
+          post.setContent("{\"body\":\""+  this.newPost +"\"}")
+          post.setUserId(this.userId)
+          const res = await this.grpcClient.createPost(post, {})
+          console.log("createPost Successful")
+          await this.getUserPosts();
+
+        } catch (err) {
+          console.error(err.message)
+          console.log("err in grpc response: ", err.message)
+          throw err
+        }
+      }
+    },
+    async getUserPosts() {
+      if (this.userId !== 0 && this.loggedIn) {
+        try {
+          const postReq = new GetPostsReq()
+          postReq.setGetBy(GETPOSTSIDTYPE_USER)
+          let idList = []
+          idList.push (this.userId)
+          postReq.setIdsList(idList)
+          const res = await this.grpcClient.getPosts(postReq, {})
+          console.log("getUserPosts successful")
+          this.posts = res.toObject().itemsList
+
+        } catch (err) {
+          console.error(err.message)
+          console.log("err in grpc response: ", err.message)
+          throw err
+        }
+      }
+    }
+
+  }
+}
+</script>
+
+``` 
+
+In addition we have a create post form in our VUE app that is connected to a createPost vue method to call the GRPC api. 
+
+We trigger a getPosts method call after login or a new post is submitted:
 
