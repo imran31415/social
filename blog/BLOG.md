@@ -1271,6 +1271,14 @@ Should run the server, mysql databse, and envoy container:
 
 You should see the login screen at localhost:3000
 
+![image](https://user-images.githubusercontent.com/2126188/120285542-33707380-c272-11eb-8813-5791b5810265.png)
+
+And after logging in you should see:
+![image](https://user-images.githubusercontent.com/2126188/120285582-3e2b0880-c272-11eb-998c-d792a530f2f1.png)
+
+And after logging in you should see:
+
+
 After entering a username and password, it should the logged in msg
 
 You should also be able to see the successful log form the grpc server:
