@@ -58,7 +58,8 @@ func (s *Server) populateFeed(postId, postOwnerId int64) error {
 		}
 		if _, err = s.CreateFeedItem(context.TODO(), toCreate); err != nil {
 			log.Println("err inserting feed item: ", err)
-
+		} else {
+			log.Println("successfully inserted Feed item")
 		}
 	}
 	if err != nil {

@@ -41,26 +41,42 @@
           </form>
         </div>
       </div>
-      <div class="row" >
-        <div class="col-md-6 offset-md-3 py-5" v-if="posts" >
-          <h2>{{this.username}}'s Posts: </h2>
-          <div class="row" v-for="post in posts" :key="post.id">
-            {{post.id}}: {{post.content}}
+      <div class ="row" >
+        <div class="col-md-6 offset-md-3 py-5" v-if="hasPosts()">
+          <div class="">
+            <h2>{{this.username}}'s Posts: </h2>
+            <div class="row" v-for="post in posts" :key="post.id">
+              {{post.id}}: {{post.content}}
+            </div>
           </div>
         </div>
         <div class="col-md-6 offset-md-3 py-5" v-else>
-          <h2> {{this.username}} has no posts in the social network </h2>
+          <div class="">
+            <h2> {{this.username}} has no posts in the social network </h2>
+          </div>
+        </div>
+      <div class="col-md-6 offset-md-3 py-5" v-if="hasFeed()">
+        <div class="">
+          <h2>{{this.username}}'s Feed: </h2>
+          <div class="row" v-for="feedItem in feed" :key="feedItem.id">
+            {{feedItem.id}}: TODO
+          </div>
         </div>
       </div>
-
+      <div class="col-md-6 offset-md-3 py-5" v-else>
+        <div class="">
+          <h2> {{this.username}} has no posts in their Feed </h2>
+        </div>
+      </div>
     </div>
+  </div>
   </div>
 </template>
 
 <script>
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import {SocialPromiseClient} from './static/js/social_grpc_web_pb'
-import {CreateUserReq, GetPostsReq, GETPOSTSIDTYPE_USER, CreatePostReq} from './static/js/social_pb'
+import {CreateUserReq, GetPostsReq, GETPOSTSIDTYPE_USER, CreatePostReq, GetFeedReq} from './static/js/social_pb'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -78,6 +94,7 @@ export default {
     userId: 0,
     loggedIn: false,
     posts : [],
+    feed: [],
   } },
 
   methods: {
@@ -91,13 +108,14 @@ export default {
          this.loggedIn = true
          this.userId = res.toObject().id
          await this.getUserPosts()
-         this.$forceUpdate();
+         await this.getFeed()
 
        } catch (err) {
          console.error(err.message)
          console.log("err in grpc response: ", err.message)
-         this.username = ""
-         this.password = ""
+         this.username = ''
+         this.feed = ''
+         this.password = ''
          this.userId = 0
          throw err
        }
@@ -137,7 +155,29 @@ export default {
           throw err
         }
       }
-    }
+    },
+    async getFeed() {
+      if (this.userId !== 0 && this.loggedIn) {
+        try {
+          const postReq = new GetFeedReq()
+          postReq.setOwnerId(this.userId)
+          const res = await this.grpcClient.getFeed(postReq, {})
+          console.log("getFeed successful")
+          this.feed = res.toObject().itemsList
+          this.$forceUpdate();
+        } catch (err) {
+          console.error(err.message)
+          console.log("err in grpc response: ", err.message)
+          throw err
+        }
+      }
+    },
+    hasPosts() {
+       return this.posts.length > 0;
+    },
+    hasFeed() {
+      return this.feed.length > 0;
+    },
 
   }
 }

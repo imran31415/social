@@ -1,6 +1,9 @@
 package repo
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/jmoiron/sqlx"
+)
 
 type FeedItem struct {
 	Id      int64 `db:"id"`
@@ -40,13 +43,18 @@ func (r *Repo) GetFeedItemById(id int64) (*FeedItem, error) {
 }
 
 func (r *Repo) GetFeedByOwnerId(id int64) (*Feed, error) {
-	comments := []*FeedItem{}
-	err := r.Db.Get(comments, "SELECT * FROM social_feed where owner_id = ?", id)
+	items := []*FeedItem{}
+	query, args, err := sqlx.In("SELECT * FROM social_feed WHERE owner_id = ? ORDER BY ID DESC LIMIT 1000", id)
 	if err != nil {
 		return nil, err
 	}
+	query = r.Db.Rebind(query)
+	err = r.Db.Select(&items, query, args...)
 
+	if err != nil {
+		return nil, err
+	}
 	return &Feed{
-		Items: comments,
+		Items: items,
 	}, nil
 }
