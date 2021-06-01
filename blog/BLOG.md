@@ -1713,3 +1713,8 @@ If we create 2 browser tabs and login with 2 different users and make a post wit
 
 ![image](https://user-images.githubusercontent.com/2126188/120383731-1a031200-c2da-11eb-8a4c-a8f2c445490c.png)
 
+You probably noticed it doesn't look right, we see "TODO" instead of "USER A says hi" which what we expect.  
+
+This is because the returned object from Feed only has the PostId not the actual post.content. We can fix this by updating the feed RPC to query and returned post_ids against our GetPost api and update the response object on Feed to include Feed.Post.Content
+
+

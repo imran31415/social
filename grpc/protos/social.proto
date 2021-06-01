@@ -38,6 +38,8 @@ message Posts {
 message FeedItem {
   int64 id = 1;
   int64 post_id = 2;
+
+  string post_content = 3;
 }
 
 

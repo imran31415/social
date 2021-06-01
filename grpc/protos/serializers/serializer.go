@@ -94,10 +94,20 @@ func FeedItem(item *repo.FeedItem) *pb.FeedItem {
 		PostId: item.PostId,
 	}
 }
-func Feed(items *repo.Feed) *pb.Feed {
+func Feed(items *repo.Feed, posts *pb.Posts) *pb.Feed {
+	postMap := map[int64]string{}
+	for _, p := range posts.Items {
+		if p.GetContent() != "" {
+			postMap[p.Id] = string(p.GetContent())
+		}
+	}
 	out := make([]*pb.FeedItem, 0, len(items.Items))
 	for _, item := range items.Items {
-		out = append(out, FeedItem(item))
+		fi := FeedItem(item)
+		if v, ok := postMap[item.PostId]; ok {
+			fi.PostContent = v
+			out = append(out)
+		}
 	}
 	return &pb.Feed{Items: out}
 }

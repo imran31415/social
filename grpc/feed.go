@@ -23,5 +23,17 @@ func (s *Server) GetFeed(ctx context.Context, req *pb.GetFeedReq) (*pb.Feed, err
 	if err != nil {
 		return nil, err
 	}
-	return serializers.Feed(feed), nil
+	postIds := make([]int64, 0, len(feed.Items))
+
+	for _, f := range feed.Items {
+		postIds = append(postIds, f.PostId)
+	}
+	posts, err := s.GetPosts(ctx, &pb.GetPostsReq{
+		Ids:   postIds,
+		GetBy: pb.GetPostsReq_GetPostsIdType_post,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return serializers.Feed(feed, posts), nil
 }
