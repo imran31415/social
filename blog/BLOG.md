@@ -1796,3 +1796,8 @@ And finally update to render the content in vue:
   ```
 
 Now when loading userBs profile, we can see the content from User A's post on user B's feed:
+
+
+<img width="698" alt="Screen Shot 2021-06-01 at 1 58 11 PM" src="https://user-images.githubusercontent.com/2126188/120389996-0360b900-c2e2-11eb-8eff-da5942428108.png">
+
+
