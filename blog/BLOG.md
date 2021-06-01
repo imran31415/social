@@ -1711,3 +1711,5 @@ Now that we have this logic in place we can re-spin up our server with `docker-c
 
 If we create 2 browser tabs and login with 2 different users and make a post with userA, that post should show up on user Bs feed:
 
+![image](https://user-images.githubusercontent.com/2126188/120383731-1a031200-c2da-11eb-8a4c-a8f2c445490c.png)
+
