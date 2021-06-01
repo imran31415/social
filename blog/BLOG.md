@@ -1623,5 +1623,15 @@ export default {
 
 In addition we have a create post form in our VUE app that is connected to a createPost vue method to call the GRPC api. 
 
-We trigger a getPosts method call after login or a new post is submitted:
+We trigger a getPosts method call after login or a new post is submitted.
+
+After re-running `docker-compose up --build` we can see the app running with post functionality working:
+
+Once logged in and after entering a post, the page should show the post dynamically as updated:
+
+![image](https://user-images.githubusercontent.com/2126188/120374709-bcb59380-c2ce-11eb-91c0-fcc97a6a91b0.png)
+
+
+## Part 7: Adding User Feed. 
+
 
