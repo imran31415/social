@@ -1,0 +1,110 @@
+syntax = "proto3";
+option go_package = ".";
+package protos;
+
+service Social {
+  rpc GetUser(GetUserReq) returns (User){}
+  rpc CreateUser(CreateUserReq) returns(User){}
+
+  rpc GetPosts(GetPostsReq) returns (Posts){}
+  rpc CreatePost(CreatePostReq) returns (Post){}
+
+  rpc CreateComment(CreateCommentReq) returns (Comment){}
+  rpc GetComments(GetCommentsReq) returns(Comments){}
+
+  rpc GetFeed(GetFeedReq) returns (Feed){}
+  rpc CreateFeedItem(CreateFeedItemReq) returns(FeedItem){}
+
+}
+
+
+message User {
+  int64 id = 1;
+  string user_name = 2;
+  // profile is json string;
+  string profile = 3;
+}
+
+message Post {
+  int64 id = 1;
+  // content is a string of JSON
+  string content = 2;
+}
+
+message Posts {
+  repeated Post items =1;
+}
+
+message FeedItem {
+  int64 id = 1;
+  int64 post_id = 2;
+}
+
+
+
+message Feed {
+  repeated FeedItem items =1;
+}
+
+message GetUserReq {
+  oneof get_by {
+    string user_name =1;
+    int64 id = 2;
+  }
+}
+
+message Comment {
+  int64 id = 1;
+  // content is a string of JSON
+  string content = 2;
+  int64 parent_id = 3;
+  int64 post_id = 4;
+}
+
+message Comments {
+  repeated Comment items = 1;
+}
+
+message GetPostsReq {
+  repeated int64 ids = 2;
+  enum GetPostsIdType {
+      GetPostsIdType_user =0;
+      GetPostsIdType_post =1;
+  }
+  GetPostsIdType get_by = 3;
+}
+
+message GetFeedReq {
+  int64 owner_id = 1;
+}
+
+message GetCommentsReq {
+  int64 post_id = 1;
+}
+
+message CreateUserReq {
+  string user_name = 1;
+  string password = 2;
+  // profile is a string of JSON
+  string profile = 3;
+}
+
+message CreatePostReq {
+  int64 user_id = 1;
+  // content is a string of JSON
+  string content = 2;
+}
+
+message CreateFeedItemReq {
+  int64 owner_id = 1;
+  int64 post_id = 2;
+}
+
+message CreateCommentReq {
+  int64 post_id = 1;
+  // if parent_comment_id = 0, then the comment is a root comment on the post
+  int64 parent_comment_id = 2;
+  // content is a string of JSON
+  string content = 3;
+}
+

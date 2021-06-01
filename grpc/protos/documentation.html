@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Protocol Documentation</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:400,700,400italic"/>
+    <style>
+      body {
+        width: 60em;
+        margin: 1em auto;
+        color: #222;
+        font-family: "Ubuntu", sans-serif;
+        padding-bottom: 4em;
+      }
+
+      h1 {
+        font-weight: normal;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+      }
+
+      h2 {
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+        margin: 1.5em 0;
+      }
+
+      h3 {
+        font-weight: normal;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+      }
+
+      a {
+        text-decoration: none;
+        color: #567e25;
+      }
+
+      table {
+        width: 100%;
+        font-size: 80%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        font-weight: 700;
+        background-color: #dcdcdc;
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: #fbfbfb;
+      }
+
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5ex 2ex;
+      }
+
+      td p {
+        text-indent: 1em;
+        margin: 0;
+      }
+
+      td p:nth-child(1) {
+        text-indent: 0;  
+      }
+
+       
+      .field-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .field-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .field-table td:nth-child(3) {  
+        width: 6em;
+      }
+      .field-table td:nth-child(4) {  
+        width: auto;
+      }
+
+       
+      .extension-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(3) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(4) {  
+        width: 5em;
+      }
+      .extension-table td:nth-child(5) {  
+        width: auto;
+      }
+
+       
+      .enum-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .enum-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .enum-table td:nth-child(3) {  
+        width: auto;
+      }
+
+       
+      .scalar-value-types-table tr {
+        height: 3em;
+      }
+
+       
+      #toc-container ul {
+        list-style-type: none;
+        padding-left: 1em;
+        line-height: 180%;
+        margin: 0;
+      }
+      #toc > li > a {
+        font-weight: bold;
+      }
+
+       
+      .file-heading {
+        width: 100%;
+        display: table;
+        border-bottom: 1px solid #aaa;
+        margin: 4em 0 1.5em 0;
+      }
+      .file-heading h2 {
+        border: none;
+        display: table-cell;
+      }
+      .file-heading a {
+        text-align: right;
+        display: table-cell;
+      }
+
+       
+      .badge {
+        width: 1.6em;
+        height: 1.6em;
+        display: inline-block;
+
+        line-height: 1.6em;
+        text-align: center;
+        font-weight: bold;
+        font-size: 60%;
+
+        color: #89ba48;
+        background-color: #dff0c8;
+
+        margin: 0.5ex 1em 0.5ex -1em;
+        border: 1px solid #fbfbfb;
+        border-radius: 1ex;
+      }
+    </style>
+
+    
+    <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+  </head>
+
+  <body>
+
+    <h1 id="title">Protocol Documentation</h1>
+
+    <h2>Table of Contents</h2>
+
+    <div id="toc-container">
+      <ul id="toc">
+        
+          
+          <li>
+            <a href="#protos%2fsocial.proto">protos/social.proto</a>
+            <ul>
+              
+                <li>
+                  <a href="#protos.Comment"><span class="badge">M</span>Comment</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.Comments"><span class="badge">M</span>Comments</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.CreateCommentReq"><span class="badge">M</span>CreateCommentReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.CreateFeedItemReq"><span class="badge">M</span>CreateFeedItemReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.CreatePostReq"><span class="badge">M</span>CreatePostReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.CreateUserReq"><span class="badge">M</span>CreateUserReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.Feed"><span class="badge">M</span>Feed</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.FeedItem"><span class="badge">M</span>FeedItem</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.GetCommentsReq"><span class="badge">M</span>GetCommentsReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.GetFeedReq"><span class="badge">M</span>GetFeedReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.GetPostsReq"><span class="badge">M</span>GetPostsReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.GetUserReq"><span class="badge">M</span>GetUserReq</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.Post"><span class="badge">M</span>Post</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.Posts"><span class="badge">M</span>Posts</a>
+                </li>
+              
+                <li>
+                  <a href="#protos.User"><span class="badge">M</span>User</a>
+                </li>
+              
+              
+                <li>
+                  <a href="#protos.GetPostsReq.GetPostsIdType"><span class="badge">E</span>GetPostsReq.GetPostsIdType</a>
+                </li>
+              
+              
+              
+                <li>
+                  <a href="#protos.Social"><span class="badge">S</span>Social</a>
+                </li>
+              
+            </ul>
+          </li>
+        
+        <li><a href="#scalar-value-types">Scalar Value Types</a></li>
+      </ul>
+    </div>
+
+    
+      
+      <div class="file-heading">
+        <h2 id="protos/social.proto">protos/social.proto</h2><a href="#title">Top</a>
+      </div>
+      <p></p>
+
+      
+        <h3 id="protos.Comment">Comment</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>content</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>content is a string of JSON </p></td>
+                </tr>
+              
+                <tr>
+                  <td>parent_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>post_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.Comments">Comments</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>items</td>
+                  <td><a href="#protos.Comment">Comment</a></td>
+                  <td>repeated</td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.CreateCommentReq">CreateCommentReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>post_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>parent_comment_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p>if parent_comment_id = 0, then the comment is a root comment on the post </p></td>
+                </tr>
+              
+                <tr>
+                  <td>content</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>content is a string of JSON </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.CreateFeedItemReq">CreateFeedItemReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>owner_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>post_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.CreatePostReq">CreatePostReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>user_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>content</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>content is a string of JSON </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.CreateUserReq">CreateUserReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>user_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>password</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>profile</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>profile is a string of JSON </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.Feed">Feed</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>items</td>
+                  <td><a href="#protos.FeedItem">FeedItem</a></td>
+                  <td>repeated</td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.FeedItem">FeedItem</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>content</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>content is a string of JSON </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.GetCommentsReq">GetCommentsReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>post_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.GetFeedReq">GetFeedReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>owner_id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.GetPostsReq">GetPostsReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>ids</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td>repeated</td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>get_by</td>
+                  <td><a href="#protos.GetPostsReq.GetPostsIdType">GetPostsReq.GetPostsIdType</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.GetUserReq">GetUserReq</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>user_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.Post">Post</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>content</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>content is a string of JSON </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.Posts">Posts</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>items</td>
+                  <td><a href="#protos.Post">Post</a></td>
+                  <td>repeated</td>
+                  <td><p> </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="protos.User">User</h3>
+        <p></p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>id</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>user_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p> </p></td>
+                </tr>
+              
+                <tr>
+                  <td>profile</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>profile is json string; </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+
+      
+        <h3 id="protos.GetPostsReq.GetPostsIdType">GetPostsReq.GetPostsIdType</h3>
+        <p></p>
+        <table class="enum-table">
+          <thead>
+            <tr><td>Name</td><td>Number</td><td>Description</td></tr>
+          </thead>
+          <tbody>
+            
+              <tr>
+                <td>GetPostsIdType_user</td>
+                <td>0</td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>GetPostsIdType_post</td>
+                <td>1</td>
+                <td><p></p></td>
+              </tr>
+            
+          </tbody>
+        </table>
+      
+
+      
+
+      
+        <h3 id="protos.Social">Social</h3>
+        <p></p>
+        <table class="enum-table">
+          <thead>
+            <tr><td>Method Name</td><td>Request Type</td><td>Response Type</td><td>Description</td></tr>
+          </thead>
+          <tbody>
+            
+              <tr>
+                <td>GetUser</td>
+                <td><a href="#protos.GetUserReq">GetUserReq</a></td>
+                <td><a href="#protos.User">User</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateUser</td>
+                <td><a href="#protos.CreateUserReq">CreateUserReq</a></td>
+                <td><a href="#protos.User">User</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>GetFeed</td>
+                <td><a href="#protos.GetFeedReq">GetFeedReq</a></td>
+                <td><a href="#protos.Feed">Feed</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateFeedItem</td>
+                <td><a href="#protos.CreateFeedItemReq">CreateFeedItemReq</a></td>
+                <td><a href="#protos.FeedItem">FeedItem</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>GetPosts</td>
+                <td><a href="#protos.GetPostsReq">GetPostsReq</a></td>
+                <td><a href="#protos.Posts">Posts</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>CreatePost</td>
+                <td><a href="#protos.CreatePostReq">CreatePostReq</a></td>
+                <td><a href="#protos.Post">Post</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateComment</td>
+                <td><a href="#protos.CreateCommentReq">CreateCommentReq</a></td>
+                <td><a href="#protos.Comment">Comment</a></td>
+                <td><p></p></td>
+              </tr>
+            
+              <tr>
+                <td>GetComments</td>
+                <td><a href="#protos.GetCommentsReq">GetCommentsReq</a></td>
+                <td><a href="#protos.Comments">Comments</a></td>
+                <td><p></p></td>
+              </tr>
+            
+          </tbody>
+        </table>
+
+        
+    
+
+    <h2 id="scalar-value-types">Scalar Value Types</h2>
+    <table class="scalar-value-types-table">
+      <thead>
+        <tr><td>.proto Type</td><td>Notes</td><td>C++</td><td>Java</td><td>Python</td><td>Go</td><td>C#</td><td>PHP</td><td>Ruby</td></tr>
+      </thead>
+      <tbody>
+        
+          <tr id="double">
+            <td>double</td>
+            <td></td>
+            <td>double</td>
+            <td>double</td>
+            <td>float</td>
+            <td>float64</td>
+            <td>double</td>
+            <td>float</td>
+            <td>Float</td>
+          </tr>
+        
+          <tr id="float">
+            <td>float</td>
+            <td></td>
+            <td>float</td>
+            <td>float</td>
+            <td>float</td>
+            <td>float32</td>
+            <td>float</td>
+            <td>float</td>
+            <td>Float</td>
+          </tr>
+        
+          <tr id="int32">
+            <td>int32</td>
+            <td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="int64">
+            <td>int64</td>
+            <td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="uint32">
+            <td>uint32</td>
+            <td>Uses variable-length encoding.</td>
+            <td>uint32</td>
+            <td>int</td>
+            <td>int/long</td>
+            <td>uint32</td>
+            <td>uint</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="uint64">
+            <td>uint64</td>
+            <td>Uses variable-length encoding.</td>
+            <td>uint64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>uint64</td>
+            <td>ulong</td>
+            <td>integer/string</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sint32">
+            <td>sint32</td>
+            <td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sint64">
+            <td>sint64</td>
+            <td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="fixed32">
+            <td>fixed32</td>
+            <td>Always four bytes. More efficient than uint32 if values are often greater than 2^28.</td>
+            <td>uint32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>uint32</td>
+            <td>uint</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="fixed64">
+            <td>fixed64</td>
+            <td>Always eight bytes. More efficient than uint64 if values are often greater than 2^56.</td>
+            <td>uint64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>uint64</td>
+            <td>ulong</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="sfixed32">
+            <td>sfixed32</td>
+            <td>Always four bytes.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sfixed64">
+            <td>sfixed64</td>
+            <td>Always eight bytes.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="bool">
+            <td>bool</td>
+            <td></td>
+            <td>bool</td>
+            <td>boolean</td>
+            <td>boolean</td>
+            <td>bool</td>
+            <td>bool</td>
+            <td>boolean</td>
+            <td>TrueClass/FalseClass</td>
+          </tr>
+        
+          <tr id="string">
+            <td>string</td>
+            <td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td>
+            <td>string</td>
+            <td>String</td>
+            <td>str/unicode</td>
+            <td>string</td>
+            <td>string</td>
+            <td>string</td>
+            <td>String (UTF-8)</td>
+          </tr>
+        
+          <tr id="bytes">
+            <td>bytes</td>
+            <td>May contain any arbitrary sequence of bytes.</td>
+            <td>string</td>
+            <td>ByteString</td>
+            <td>str</td>
+            <td>[]byte</td>
+            <td>ByteString</td>
+            <td>string</td>
+            <td>String (ASCII-8BIT)</td>
+          </tr>
+        
+      </tbody>
+    </table>
+  </body>
+</html>
+

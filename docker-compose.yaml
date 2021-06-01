@@ -1,0 +1,54 @@
+version: "3"
+services:
+  # This is the MYSQL server,  this will/should only be using for development.
+  # In production we will set an Env variable indicating it is prod and we will
+  db:
+    restart: always
+    build:
+      context: ./mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: tauhisgasgknga
+    container_name: db
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    tty: true
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin -u root -ptauhisgasgknga ping']
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    security_opt:
+      - seccomp:unconfined
+  backend:
+    links:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: "http/Dockerfile"
+    container_name: backend
+    ports:
+      - "50053:50053" # GRPC server // clients can connect to this via GRPC (expirimental)
+      - "3000:3000" # HTTP server // clients can connect to this via HTTP
+    tty: true
+    environment:
+      - "DB_PORT=3306"
+      - "DB_HOST=db"
+      - "DB_NAME=test"
+      - "DB_PASS=tauhisgasgknga"
+  envoy:
+    links:
+      - backend
+    build:
+      context: ./envoy
+    container_name: envoy
+    ports:
+      - "8083:8083"
+    tty: true
+
+volumes:
+  dbdata:

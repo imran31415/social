@@ -1,0 +1,11 @@
+{
+  "name": "social",
+  "version": "1.0.0",
+  "dependencies": {
+    "google-protobuf": "^3.17.1",
+    "grpc-web": "^1.2.1"
+  },
+  "devDependencies": {
+    "js": "^0.1.0"
+  }
+}
