@@ -8,6 +8,7 @@ Create a social network application where users can have an account, make posts,
 - Go
 - Mysql
 - GRPC/ Protocol Buffers
+- Vue
 
 ## Plan
 
@@ -1113,5 +1114,168 @@ Armed with our fully implemented social GRPC server, we can now implement the fr
 
 To Create our Front end app we are going to add our third module: `http`
 
-`http` will wrap the code we need to serve the html, javascript as well as the javascript client that will talk to 
+`http` will include our vue app as well as a go http server we can use to run the vue app. 
+
+I wont go to deep into the specific code implementation but it involves the following steps
+
+1. installing vue, grpc-web node dependencies
+2. creating an `http/frontend` folder and starting the vue app in there with `vue create`
+3. updating the protoc command to complie javascrip/proto files to the destination file:
+```
+protoc --proto_path=protos --js_out=import_style=commonjs,binary:../http/static/js --grpc-web_out=import_style=commonjs,mode=grpcwebtext:../http/static/js protos/social.proto
+```
+4. adding code to the generated App.vue file to login a user using the GRPC api:
+```vue
+<template>
+
+  <div id="app" class="container" >
+    <div class="row">
+      <div class="col-md-6 offset-md-3 py-5">
+        <h1>Welcome to the social network</h1>
+      </div>
+    </div>
+    <div class="row" v-if="loggedIn">
+      <div class="col-md-6 offset-md-3 py-5">
+        <h2>You are logged in, welcome {{this.username}}</h2>
+      </div>
+    </div>
+    <div class="row" v-else>
+      <div class="col-md-6 offset-md-3 py-5">
+        <h1>Login to Social Network</h1>
+        <p>If you dont have a login, enter a username and password and one will be created</p>
+        <form v-on:submit.prevent="createUser">
+          <div class="form-group">
+            <input v-model="username" type="text" id="username-input" placeholder="Enter a username" class="form-control">
+            <input v-model="password" type="password" id="password-input" placeholder="Enter a password" class="form-control">
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary">Create!</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import {SocialPromiseClient} from './static/js/social_grpc_web_pb'
+import {CreateUserReq, User} from './static/js/social_pb'
+
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+export default {
+  name: 'App',
+
+  created: function() {
+    this.grpcClient = new SocialPromiseClient("http://localhost:8083", null, null);
+  },
+
+  data() { return {
+    username: '',
+    password: '',
+    userId: 0,
+    loggedIn: false,
+  } },
+
+  methods: {
+    async createUser() {
+      console.log("Creating user: " + this.username)
+
+      try {
+        const user = new CreateUserReq()
+        user.setUserName(this.username)
+        user.setPassword(this.password)
+        const res = await this.grpcClient.createUser(user, {})
+        console.log("Successfully received GRPC response, object returned is: " + JSON.stringify(res))
+        this.loggedIn = true
+        this.$forceUpdate()
+
+      } catch (err) {
+        console.error(err.message)
+        console.log("err in grpc response: ", err.message);
+        throw err
+      }
+    }
+  }
+}
+</script>
+```
+
+5. creating a docker file for the `http` package
+
+```dockerfile
+# Build and bundle the Vue.js frontend SPA
+#
+FROM node:14-alpine AS vue-build
+WORKDIR /build
+
+COPY http/frontend/package*.json ./
+RUN npm install
+
+COPY http/frontend .
+
+
+RUN npm run build
+
+#
+# Build the Go server backend
+#
+FROM golang:1.16-alpine as go-build
+
+WORKDIR /build/src/
+
+RUN apk update && apk add git gcc musl-dev
+
+COPY http/ ./http
+COPY db/ ./db
+COPY grpc/ ./grpc
+
+ENV GO111MODULE=on
+WORKDIR /build/src/http/server
+# Disabling cgo results in a fully static binary that can run without C libs
+RUN CGO_ENABLED=0 GOOS=linux go build -o main.go
+
+#
+# Assemble the server binary and Vue bundle into a single app
+#
+FROM alpine
+WORKDIR /app
+
+COPY --from=vue-build /build/dist ./dist
+COPY --from=go-build /build/src/http/server .
+COPY --from=go-build /build/src/db/schema ./db/schema
+
+
+
+ENV PORT 8080
+EXPOSE 8080
+CMD ["/app/main.go"]
+```
+
+This Dockerfile builds go and vue code into one http server binary
+If you want more info on the details behind this dockerfile please google ""
+
+6.Next we create a docker-compose.yaml file that can run 3 dockefiles:  
+ - mysql/Dockerfile
+ - http/Dockerfile 
+ - envoy/Dockerfile:  proxy to enable http2 requests to our GRPC server from the vue app
+
+Running all this with 
+
+```bash
+docker-compose up --build
+```
+
+Should run the server, mysql databse, and envoy container:
+
+You should see the login screen at localhost:3000
+
+After entering a username and password, it should the logged in msg
+
+You should also be able to see the successful log form the grpc server:
+
+`backend    | 2021/06/01 07:26:37 Successfully created user
+`
+
 

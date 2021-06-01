@@ -40,6 +40,8 @@ services:
       - "DB_HOST=db"
       - "DB_NAME=test"
       - "DB_PASS=tauhisgasgknga"
+      - "DB_USER=root"
+      - "MIGRATIONS_PATH=./db/schema"
   envoy:
     links:
       - backend

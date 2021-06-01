@@ -7,7 +7,8 @@ WORKDIR /build
 COPY http/frontend/package*.json ./
 RUN npm install
 
-COPY http/frontend/ ./
+COPY http/frontend .
+
 
 RUN npm run build
 
@@ -21,11 +22,11 @@ WORKDIR /build/src/
 RUN apk update && apk add git gcc musl-dev
 
 COPY http/ ./http
-COPY db/repo/ ./db/repo
+COPY db/ ./db
 COPY grpc/ ./grpc
 
 ENV GO111MODULE=on
-WORKDIR /build/src/http
+WORKDIR /build/src/http/server
 # Disabling cgo results in a fully static binary that can run without C libs
 RUN CGO_ENABLED=0 GOOS=linux go build -o main.go
 
@@ -35,8 +36,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main.go
 FROM alpine
 WORKDIR /app
 
-COPY --from=vue-build /build/dist .
-COPY --from=go-build /build/src/server/server .
+COPY --from=vue-build /build/dist ./dist
+COPY --from=go-build /build/src/http/server .
+COPY --from=go-build /build/src/db/schema ./db/schema
+
+
 
 ENV PORT 8080
 EXPOSE 8080

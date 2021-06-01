@@ -3,6 +3,7 @@ package test_helpers
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"social/repo"
 	"strings"
@@ -14,6 +15,7 @@ const (
 )
 
 func SetupDbForTest(dbName string, sqlFile string, migrationsPath string) (*repo.Repo, error) {
+	os.Setenv("MIGRATIONS_PATH", "../db/schema")
 	if !strings.HasPrefix(dbName, "test") {
 		return nil, fmt.Errorf("name: %s does not begin with test", dbName)
 	}

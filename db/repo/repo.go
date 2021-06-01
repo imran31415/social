@@ -44,7 +44,7 @@ type Config struct {
 }
 
 func (c *Config) MigrationsPath() string {
-	return filepath.FromSlash("../db/schema")
+	return filepath.FromSlash(os.Getenv("MIGRATIONS_PATH"))
 }
 
 // NewRepo initializes the struct as well as connects to the database and performs the initial migrations.
@@ -139,6 +139,11 @@ func (r *Repo) Migrate() error {
 		return err
 
 	} else if !exists {
+		path, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Println(path) // for example /home/user
 		return fmt.Errorf("migrations path does not exist: %s", r.Config.MigrationsPath())
 	}
 

@@ -32,7 +32,7 @@ func (r *Repo) GetUserById(id int64) (*User, error) {
 
 func (r *Repo) InsertUser(p *User) (int64, error) {
 	if p.Username == "" || p.Password == "" || p.Username == p.Password {
-		return 0, fmt.Errorf("invalid req")
+		return 0, fmt.Errorf("invalid user req")
 	}
 	res, err := r.Db.NamedExec(`
 		INSERT INTO social_user (
