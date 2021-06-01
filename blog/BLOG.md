@@ -1699,7 +1699,15 @@ func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*pb.Pos
 }
 ```
 
-We can refactor this out later by instead of triggering the go routine, we can push the msg to signal feed population to pubsub or kafka and then have one centralized process writing to the DB. 
-This way throttling will be easier if we get too many go routines trying to write to the DB at the same time.  Another way to handle this without pubsub is using a go routine pool to perform the DB updates so we can limit the concurrent writes to the DB based on the number of workers in the pool.
+Note we also add a repo method to search for all users that dont match the content owner to populate the feed for that item
 
-With the GRPC api updated to populate the feed after a post is created, we can update the front end to render the posts for a given user.
+Note, it is not ideal that this just spawns a go routine that does N * number of users inserts on the DB.  If 1000 users were posting at the same time, that is 1000*1000 go routines spawning doing inserts to the DB at the same time.
+A way to refactor this is either to instead push a msg with the post_id and user_id to a pubsub and have 1 worker process doing the fanout logic.  This way we can throttle inserts through this one point.
+Another option is to use a go routine worker pool to ensure only X amount of go routines are executing inserts at one time.
+
+We can come back to this and refactor it later.
+
+Now that we have this logic in place we can re-spin up our server with `docker-compose up --build`
+
+If we create 2 browser tabs and login with 2 different users and make a post with userA, that post should show up on user Bs feed:
+
