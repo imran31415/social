@@ -95,10 +95,13 @@ func FeedItem(item *repo.FeedItem) *pb.FeedItem {
 	}
 }
 func Feed(items *repo.Feed, posts *pb.Posts) *pb.Feed {
+	if len(items.Items) == 0 || len(posts.GetItems()) == 0 {
+		return nil
+	}
 	postMap := map[int64]string{}
 	for _, p := range posts.Items {
-		if p.GetContent() != "" {
-			postMap[p.Id] = string(p.GetContent())
+		if p.GetContent() != "{}" {
+			postMap[p.Id] = p.GetContent()
 		}
 	}
 	out := make([]*pb.FeedItem, 0, len(items.Items))
@@ -106,7 +109,7 @@ func Feed(items *repo.Feed, posts *pb.Posts) *pb.Feed {
 		fi := FeedItem(item)
 		if v, ok := postMap[item.PostId]; ok {
 			fi.PostContent = v
-			out = append(out)
+			out = append(out, fi)
 		}
 	}
 	return &pb.Feed{Items: out}

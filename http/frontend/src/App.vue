@@ -42,34 +42,30 @@
         </div>
       </div>
       <div class ="row" >
-        <div class="col-md-6 offset-md-3 py-5" v-if="hasPosts()">
-          <div class="">
-            <h2>{{this.username}}'s Posts: </h2>
-            <div class="row" v-for="post in posts" :key="post.id">
-              {{post.id}}: {{post.content}}
+          <div class="col-md-4 offset-md-1 py-5" v-if="hasPosts()">
+            <div class="">
+              <h2>{{this.username}}'s Posts: </h2>
+              <div class="row" v-for="post in posts" :key="post.id">
+                {{post.id}}: {{post.content}}
+              </div>
             </div>
           </div>
-        </div>
-        <div class="col-md-6 offset-md-3 py-5" v-else>
-          <div class="">
-            <h2> {{this.username}} has no posts in the social network </h2>
+          <div class="col-md-4 offset-md-1 py-5" v-else>
+            <div class="">
+              <h2> {{this.username}} has no posts in the social network </h2>
+            </div>
           </div>
-        </div>
-      <div class="col-md-6 offset-md-3 py-5" v-if="hasFeed()">
-        <div class="">
+        <div class="col-md-4 offset-md-1 py-5" v-if="hasFeed()">
           <h2>{{this.username}}'s Feed: </h2>
           <div class="row" v-for="feedItem in feed" :key="feedItem.id">
-            {{feedItem.id}}: TODO
+            {{feedItem.id}}: {{feedItem.postContent}}}
           </div>
         </div>
-      </div>
-      <div class="col-md-6 offset-md-3 py-5" v-else>
-        <div class="">
+        <div class="col-md-4 offset-md-1 py-5" v-else>
           <h2> {{this.username}} has no posts in their Feed </h2>
         </div>
       </div>
     </div>
-  </div>
   </div>
 </template>
 

@@ -889,7 +889,8 @@ proto.protos.FeedItem.prototype.toObject = function(opt_includeInstance) {
 proto.protos.FeedItem.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    postId: jspb.Message.getFieldWithDefault(msg, 2, 0)
+    postId: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    postContent: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -934,6 +935,10 @@ proto.protos.FeedItem.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readInt64());
       msg.setPostId(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setPostContent(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -977,6 +982,13 @@ proto.protos.FeedItem.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getPostContent();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1013,6 +1025,24 @@ proto.protos.FeedItem.prototype.getPostId = function() {
  */
 proto.protos.FeedItem.prototype.setPostId = function(value) {
   return jspb.Message.setProto3IntField(this, 2, value);
+};
+
+
+/**
+ * optional string post_content = 3;
+ * @return {string}
+ */
+proto.protos.FeedItem.prototype.getPostContent = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.protos.FeedItem} returns this
+ */
+proto.protos.FeedItem.prototype.setPostContent = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

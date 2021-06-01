@@ -3,7 +3,7 @@
 Build Protos
 ```bash
 protoc -I protos/ protos/social.proto --go_out=plugins=grpc:protos
-protoc --proto_path=protos --js_out=import_style=commonjs,binary:../http/static/js --grpc-web_out=import_style=commonjs,mode=grpcwebtext:../http/static/js protos/social.proto 
+protoc --proto_path=protos --js_out=import_style=commonjs,binary:../http/frontend/src/static/js --grpc-web_out=import_style=commonjs,mode=grpcwebtext:../http/frontend/src/static/js protos/social.proto 
 protoc --doc_out=protos  protos/social.proto 
 ```
 

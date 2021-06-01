@@ -1651,6 +1651,7 @@ Next we can query the posts by the feed.post_id to get the post content and retu
 
 To support this anytime a user makes a post through the GRPC create post endpoint, we need to trigger a process to populate all other user's feed table rows with the post and user ID.
 
+We eventually will want to refactor this to create some notion of following so users only see posts they care about but for now we will fan out all posts to all users.
 The implementation for this is a function to populate the feed based on a postId and the post's owner ID:
 
 ```go
@@ -1713,8 +1714,84 @@ If we create 2 browser tabs and login with 2 different users and make a post wit
 
 ![image](https://user-images.githubusercontent.com/2126188/120383731-1a031200-c2da-11eb-8a4c-a8f2c445490c.png)
 
+We can also see that in the backend the feed items were inserted: 
+```
+backend    | 2021/06/01 20:38:19 successfully inserted Feed item
+backend    | 2021/06/01 20:38:19 successfully inserted Feed item
+backend    | 2021/06/01 20:38:19 successfully inserted Feed item
+backend    | 2021/06/01 20:38:19 successfully inserted Feed item
+...
+```
 You probably noticed it doesn't look right, we see "TODO" instead of "USER A says hi" which what we expect.  
 
 This is because the returned object from Feed only has the PostId not the actual post.content. We can fix this by updating the feed RPC to query and returned post_ids against our GetPost api and update the response object on Feed to include Feed.Post.Content
 
+To fix this we can add a query in the GetFeed call to make another call to get the corresponding posts, and update the serializer for Feed to display the content:
 
+Updated GetFeed:
+
+```go
+func (s *Server) GetFeed(ctx context.Context, req *pb.GetFeedReq) (*pb.Feed, error) {
+	feed, err := s.r.GetFeedByOwnerId(req.GetOwnerId())
+	if err != nil {
+		return nil, err
+	}
+	postIds := make([]int64, 0, len(feed.Items))
+
+	for _, f := range feed.Items {
+		postIds = append(postIds, f.PostId)
+	}
+	posts, err := s.GetPosts(ctx, &pb.GetPostsReq{
+		Ids:   postIds,
+		GetBy: pb.GetPostsReq_GetPostsIdType_post,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return serializers.Feed(feed, posts), nil
+}
+
+```
+
+update serializer:
+
+```go
+func Feed(items *repo.Feed, posts *pb.Posts) *pb.Feed {
+	if len(items.Items) == 0 || len(posts.GetItems()) == 0 {
+		return nil
+	}
+	postMap := map[int64]string{}
+	for _, p := range posts.Items {
+		if p.GetContent() != "{}" {
+			postMap[p.Id] = p.GetContent()
+		}
+	}
+	out := make([]*pb.FeedItem, 0, len(items.Items))
+	for _, item := range items.Items {
+		fi := FeedItem(item)
+		if v, ok := postMap[item.PostId]; ok {
+			fi.PostContent = v
+			out = append(out, fi)
+		}
+	}
+	return &pb.Feed{Items: out}
+}
+```
+
+And finally update to render the content in vue:
+
+```vue 
+ <div class="col-md-4 offset-md-1 py-5" v-if="hasFeed()">
+          <h2>{{this.username}}'s Feed: </h2>
+          <div class="row" v-for="feedItem in feed" :key="feedItem.id">
+            {{feedItem.id}}: {{feedItem.postContent}}}
+          </div>
+        </div>
+        <div class="col-md-4 offset-md-1 py-5" v-else>
+          <h2> {{this.username}} has no posts in their Feed </h2>
+        </div>
+      </div>
+
+  ```
+
+Now when loading userBs profile, we can see the actual feed content:
