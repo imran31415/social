@@ -1795,4 +1795,4 @@ And finally update to render the content in vue:
 
   ```
 
-Now when loading userBs profile, we can see the the content from User A's post on user B's feed:
+Now when loading userBs profile, we can see the content from User A's post on user B's feed:
