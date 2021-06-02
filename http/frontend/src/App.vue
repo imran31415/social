@@ -1,24 +1,19 @@
 <template>
-
-  <div id="app" class="container" >
-    <div class="row">
-      <div class="col-md-6 offset-md-3 py-5">
-        <h1>Welcome to the social network</h1>
-      </div>
-    </div>
-    <div class="row" v-if="loggedIn">
-      <div class="col-md-6 offset-md-3 py-5">
-        <h2>You are logged in, welcome {{this.username}}</h2>
-      </div>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="col-md-2 offset-md-1"> <a class="navbar-brand" href="#">Social Network</a></div>
+  </nav>
+  <div id="app" class="container bg-light text-dark border">
+    <div class="row" v-if="this.$store.state.loggedIn">
     </div>
     <div class="row" v-else>
       <div class="col-md-6 offset-md-3 py-5">
-        <h1>Login to Social Network</h1>
+        <h1>Login</h1>
+        <p>if you are a new user, a login will be created.</p>
         <p>If you dont have a login, enter a username and password and one will be created</p>
         <form v-on:submit.prevent="login">
           <div class="form-group">
-            <input v-model="username" type="text" id="username-input" placeholder="Enter a username" class="form-control">
-            <input v-model="password" type="password" id="password-input" placeholder="Enter a password" class="form-control">
+            <input v-model="this.$store.state.username" type="text" id="username-input" placeholder="Enter a username" class="form-control">
+            <input v-model="this.$store.state.password" type="password" id="password-input" placeholder="Enter a password" class="form-control">
           </div>
           <div class="form-group">
             <button class="btn btn-primary">Login!</button>
@@ -26,14 +21,14 @@
         </form>
       </div>
     </div>
-    <div v-if="loggedIn">
+    <div v-if="this.$store.state.loggedIn">
       <div class="row">
         <div class="col-md-6 offset-md-3 py-5">
-          <h3>{{this.username}} Create a Post: </h3>
+          <h3>{{this.$store.state.username}} Create a Post: </h3>
           <p>Enter some text to create a post</p>
           <form v-on:submit.prevent="createPost">
             <div class="form-group">
-              <input v-model="newPost" type="text" id="newPost-input" placeholder="Your Post" class="form-control">
+              <textarea v-model="this.$store.state.newPost" type="text" id="newPost-input" placeholder="Your Post" class="form-control" rows="3"></textarea>
             </div>
             <div class="form-group">
               <button class="btn btn-primary">Post!</button>
@@ -41,28 +36,37 @@
           </form>
         </div>
       </div>
-      <div class ="row" >
-          <div class="col-md-4 offset-md-1 py-5" v-if="hasPosts()">
-            <div class="">
-              <h2>{{this.username}}'s Posts: </h2>
-              <div class="row" v-for="post in posts" :key="post.id">
-                {{post.id}}: {{post.content}}
+      <div v-if="hasFeed()">
+        <div class="row" v-for="feedItem in this.$store.state.feed" :key="feedItem.id">
+          <div class="col-md-12">
+            <div class="container">
+              <div class="row d-flex justify-content-center">
+                <div class="col-md-8">
+                  <div class="d-flex flex-row"></div>
+                  <div class="row news-card p-3 bg-white">
+                    <div class="col-md-4">
+                      <div class="feed-image"><img class="news-feed-image rounded img-fluid img-responsive" src="https://i.imgur.com/EGa6hnF.jpg"></div>
+                    </div>
+                    <div class="col-md-8">
+                      <div class="news-feed-text">
+                        <span>{{feedItem.id}} {{feedItem.postContent}}}</span>
+                        <div class="d-flex flex-row justify-content-between align-items-center mt-2">
+                          <div class="d-flex creator-profile">
+                            <img class="rounded-circle" src="https://i.imgur.com/EGa6hnF.jpg" width="50" height="50">
+                            <div class="d-flex flex-column ml-2">
+                              <h6 class="username">{{ this.$store.state.username }}</h6>
+                              <span class="date">Jan 20,2020</span>
+                            </div>
+                          </div>
+                          <i class="fa fa-share share"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="col-md-4 offset-md-1 py-5" v-else>
-            <div class="">
-              <h2> {{this.username}} has no posts in the social network </h2>
-            </div>
-          </div>
-        <div class="col-md-4 offset-md-1 py-5" v-if="hasFeed()">
-          <h2>{{this.username}}'s Feed: </h2>
-          <div class="row" v-for="feedItem in feed" :key="feedItem.id">
-            {{feedItem.id}}: {{feedItem.postContent}}}
-          </div>
-        </div>
-        <div class="col-md-4 offset-md-1 py-5" v-else>
-          <h2> {{this.username}} has no posts in their Feed </h2>
         </div>
       </div>
     </div>
@@ -70,61 +74,61 @@
 </template>
 
 <script>
-import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+
 import {SocialPromiseClient} from './static/js/social_grpc_web_pb'
 import {CreateUserReq, GetPostsReq, GETPOSTSIDTYPE_USER, CreatePostReq, GetFeedReq} from './static/js/social_pb'
 
+
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+
 export default {
   name: 'App',
-
-  created: function() {
+  created: async function() {
     this.grpcClient = new SocialPromiseClient("http://localhost:8083", null, null)
+    if(localStorage.loggedIn) this.$store.state.loggedIn = localStorage.loggedIn;
+    if(localStorage.userId) this.$store.state.userId = localStorage.userId;
+    if(localStorage.loggedIn) await this.getFeed();
+
   },
-
-  data() { return {
-    username: '',
-    password: '',
-    newPost: '',
-    userId: 0,
-    loggedIn: false,
-    posts : [],
-    feed: [],
-  } },
-
+  data() { return {} },
   methods: {
      async login() {
        try {
          const user = new CreateUserReq()
-         user.setUserName(this.username)
-         user.setPassword(this.password)
+         user.setUserName(this.$store.state.username)
+         user.setPassword(this.$store.state.password)
          const res = await this.grpcClient.createUser(user, {})
          console.log("Login Successful")
-         this.loggedIn = true
-         this.userId = res.toObject().id
-         await this.getUserPosts()
+         this.$store.state.loggedIn = true
+         this.$store.state.userId = res.toObject().id
+         localStorage.loggedIn = this.$store.state.loggedIn;
+         localStorage.userId = this.$store.state.userId;
          await this.getFeed()
 
        } catch (err) {
          console.error(err.message)
          console.log("err in grpc response: ", err.message)
-         this.username = ''
-         this.feed = ''
-         this.password = ''
-         this.userId = 0
+         this.$store.state.username = ''
+         this.$store.state.feed = ''
+         this.$store.state.password = ''
+         this.$store.state.userId = 0
+
          throw err
        }
      },
     async createPost() {
-      if (this.userId !== 0 && this.loggedIn && this.newPost !== '') {
+      if (this.$store.state.userId !== 0 && this.$store.state.loggedIn && this.$store.state.newPost !== '') {
         try {
           const post = new CreatePostReq()
-          post.setContent("{\"body\":\""+  this.newPost +"\"}")
-          post.setUserId(this.userId)
+          post.setContent("{\"body\":\""+  this.$store.state.newPost +"\"}")
+          post.setUserId(this.$store.state.userId)
           const res = await this.grpcClient.createPost(post, {})
           console.log("createPost Successful")
-          await this.getUserPosts();
+          // wait 5 seconds for feed item to propagate to users feed
+          await new Promise(r => setTimeout(r, 5000));
+          await this.getFeed();
 
         } catch (err) {
           console.error(err.message)
@@ -134,16 +138,16 @@ export default {
       }
     },
     async getUserPosts() {
-      if (this.userId !== 0 && this.loggedIn) {
+      if (this.$store.state.userId !== 0 && this.$store.state.loggedIn) {
         try {
           const postReq = new GetPostsReq()
           postReq.setGetBy(GETPOSTSIDTYPE_USER)
           let idList = []
-          idList.push (this.userId)
+          idList.push (this.$store.state.userId)
           postReq.setIdsList(idList)
           const res = await this.grpcClient.getPosts(postReq, {})
           console.log("getUserPosts successful")
-          this.posts = res.toObject().itemsList
+          this.$store.state.posts = res.toObject().itemsList
 
         } catch (err) {
           console.error(err.message)
@@ -153,14 +157,13 @@ export default {
       }
     },
     async getFeed() {
-      if (this.userId !== 0 && this.loggedIn) {
+      if (this.$store.state.userId !== 0 && this.$store.state.loggedIn) {
         try {
           const postReq = new GetFeedReq()
-          postReq.setOwnerId(this.userId)
+          postReq.setOwnerId(this.$store.state.userId)
           const res = await this.grpcClient.getFeed(postReq, {})
           console.log("getFeed successful")
-          this.feed = res.toObject().itemsList
-          this.$forceUpdate();
+          this.$store.state.feed = res.toObject().itemsList
         } catch (err) {
           console.error(err.message)
           console.log("err in grpc response: ", err.message)
@@ -169,12 +172,43 @@ export default {
       }
     },
     hasPosts() {
-       return this.posts.length > 0;
+       return this.$store.state.posts.length > 0;
     },
     hasFeed() {
-      return this.feed.length > 0;
+      return this.$store.state.feed.length > 0;
     },
 
   }
 }
 </script>
+
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope&display=swap');
+
+body {
+  background-color: #eee;
+  font-family: 'Manrope', sans-serif
+}
+
+.news-card {
+  border-radius: 8px
+}
+
+.news-feed-image {
+  border-radius: 8px;
+  width: 100%
+}
+
+.date {
+  font-size: 12px
+}
+
+.username {
+  color: blue
+}
+
+.share {
+  color: blue
+}
+</style>

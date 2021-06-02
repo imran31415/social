@@ -23,7 +23,7 @@ func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostReq) (*pb.Pos
 	}
 	created := posts.Items[0]
 	// TODO: move this out of user call path
-	go s.populateFeed(created.Id, created.UserId)
+	go s.populateFeed(created.Id)
 	return serializers.Post(posts.Items[0]), nil
 }
 
@@ -46,11 +46,12 @@ func (s *Server) GetPosts(ctx context.Context, req *pb.GetPostsReq) (*pb.Posts, 
 	}
 }
 
-func (s *Server) populateFeed(postId, postOwnerId int64) error {
-	users, err := s.r.GetUsersOtherThanId(postOwnerId)
+func (s *Server) populateFeed(postId int64) error {
+	users, err := s.r.GetAllUsers()
 	if err != nil {
 		return err
 	}
+	suc, errs := 0, 0
 	for _, user := range users.Items {
 		toCreate := &pb.CreateFeedItemReq{
 			OwnerId: user.Id,
@@ -58,11 +59,15 @@ func (s *Server) populateFeed(postId, postOwnerId int64) error {
 		}
 		if _, err = s.CreateFeedItem(context.TODO(), toCreate); err != nil {
 			log.Println("err inserting feed item: ", err)
+			errs += 1
 		} else {
-			log.Println("successfully inserted Feed item")
+			suc += 1
 		}
 	}
+	log.Printf("Successfully inserted %d items", suc)
+
 	if err != nil {
+		log.Printf("Failed to insert  %d items", errs)
 		return err
 	}
 	return nil

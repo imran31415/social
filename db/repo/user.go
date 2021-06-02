@@ -35,9 +35,9 @@ func (r *Repo) GetUserById(id int64) (*User, error) {
 	return c, nil
 }
 
-func (r *Repo) GetUsersOtherThanId(id int64) (*Users, error) {
+func (r *Repo) GetAllUsers() (*Users, error) {
 	users := []*User{}
-	query, args, err := sqlx.In(fmt.Sprintf("SELECT * FROM social_user WHERE id != ?"), id)
+	query, args, err := sqlx.In(fmt.Sprintf("SELECT * FROM social_user WHERE id != ?"), 0)
 	if err != nil {
 		return nil, err
 	}

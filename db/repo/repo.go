@@ -18,7 +18,7 @@ type Iface interface {
 	InsertUser(p *User) (int64, error)
 	GetUserById(id int64) (*User, error)
 	GetUserByUserName(username string) (*User, error)
-	GetUsersOtherThanId(id int64) (*Users, error)
+	GetAllUsers() (*Users, error)
 
 	InsertPost(p *Post) (int64, error)
 	GetPostsIds(ids []int64, fieldName SocialPostFieldName) (*Posts, error)
